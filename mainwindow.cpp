@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     reLayout->addWidget(re,100);
 
     reStyle = new QComboBox;
+    reStyle ->setToolTip(tr("The regular expression syntax to use"));
     reStyle->addItem("RegExp");
     reStyle->addItem("RegExp2");
     reStyle->addItem("Wildcard");
@@ -39,13 +40,14 @@ MainWindow::MainWindow(QWidget *parent)
     reLayout->addWidget(reStyle);
 
     QPushButton *escapeButton = new QPushButton("\\");
+    escapeButton->setToolTip(tr("Get this expression as an escaped, C-style string"));
     connect(escapeButton,SIGNAL(clicked()),this,SLOT(escapeString()));
     reLayout->addWidget(escapeButton,0);
 
     layout->addLayout(reLayout);
     layout->addWidget(new QLabel(tr("Result")));
     layout->addWidget(result);
-    layout->addWidget(new QLabel(tr("Matchs")));
+    layout->addWidget(new QLabel(tr("Matches")));
     layout->addWidget(list);
 
     connect(string,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
