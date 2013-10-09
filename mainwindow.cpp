@@ -1,14 +1,17 @@
 #include "mainwindow.h"
 
 #include <QtGui>
+#include <QtWidgets>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     QVBoxLayout *layout = new QVBoxLayout;
 
-    string = new QLineEdit("\\uni0644.medi.preAlef");
-    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
+//    string = new QLineEdit("\\uni0644.medi.preAlef");
+//    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
+    string = new QLineEdit;
+    re = new QLineEdit;
     result = new QTextEdit;
     list = new QListWidget;
 
