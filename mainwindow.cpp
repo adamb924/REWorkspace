@@ -29,19 +29,6 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(new QLabel(tr("Regular Expression")));
     reLayout->addWidget(re,100);
 
-    reStyle = new QComboBox;
-    reStyle ->setToolTip(tr("The regular expression syntax to use"));
-    reStyle->addItem("RegExp");
-    reStyle->addItem("RegExp2");
-    reStyle->addItem("Wildcard");
-    reStyle->addItem("Wildcard");
-    reStyle->addItem("WildcardUnix");
-    reStyle->addItem("FixedString");
-    reStyle->addItem("W3CXmlSchema11");
-    connect(reStyle,SIGNAL(currentIndexChanged(QString)),this,SLOT(setRETypeToolTip()));
-    connect(reStyle,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateResult()));
-    reLayout->addWidget(reStyle);
-
     QPushButton *escapeButton = new QPushButton("\\");
     escapeButton->setToolTip(tr("Get this expression as an escaped, C-style string"));
     connect(escapeButton,SIGNAL(clicked()),this,SLOT(escapeString()));
@@ -61,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent)
     this->setCentralWidget(cw);
 
     updateResult();
-    setRETypeToolTip();
 }
 
 MainWindow::~MainWindow()
@@ -73,37 +59,18 @@ void MainWindow::updateResult()
 {
     QString input = string->text();
     QString output = input;
-    QRegExp expression( re->text() );
+    QRegularExpression expression( re->text() );
 
-    QString strCurrent = reStyle->currentText();
-    if(strCurrent == "RegExp") {
-	expression.setPatternSyntax(QRegExp::RegExp);
-    }
-    else if(strCurrent == "RegExp2") {
-	expression.setPatternSyntax(QRegExp::RegExp2);
-    }
-    else if(strCurrent == "Wildcard") {
-	expression.setPatternSyntax(QRegExp::Wildcard);
-    }
-    else if(strCurrent == "WildcardUnix") {
-	expression.setPatternSyntax(QRegExp::WildcardUnix);
-    }
-    else if(strCurrent == "FixedString") {
-	expression.setPatternSyntax(QRegExp::FixedString);
-    }
-    else if(strCurrent == "W3CXmlSchema11") {
-	expression.setPatternSyntax(QRegExp::W3CXmlSchema11);
-    }
+    QRegularExpressionMatch match = expression.match(input);
 
-
-    int from = expression.indexIn(input);
-    int len = expression.matchedLength();
+    int from = match.capturedStart();
+    int len = match.capturedLength();
 
     if(from != -1)
 	output.replace( from , len , "<font color=\"red\">"+input.mid(from,len)+"</font>");
     result->setHtml(output);
 
-    QStringList captures = expression.capturedTexts();
+    QStringList captures = match.capturedTexts();
     captures.removeAt(0);
     list->clear();
     list->addItems(captures);
@@ -126,27 +93,4 @@ void MainWindow::escapeString()
 {
     QString escaped = re->text().replace("\\","\\\\");
     QInputDialog::getText( this, this->windowTitle(), tr("The C-escaped regular expression:"), QLineEdit::Normal, escaped );
-}
-
-void MainWindow::setRETypeToolTip()
-{
-    QString strCurrent = reStyle->currentText();
-    if(strCurrent == "RegExp") {
-	reStyle->setToolTip("A rich Perl-like pattern matching syntax. This is the default.");
-    }
-    else if(strCurrent == "RegExp2") {
-	reStyle->setToolTip("Like RegExp, but with greedy quantifiers. This will be the default in Qt 5. (Introduced in Qt 4.2.)");
-    }
-    else if(strCurrent == "Wildcard") {
-	reStyle->setToolTip("This provides a simple pattern matching syntax similar to that used by shells (command interpreters) for \"file globbing\". See Wildcard Matching.");
-    }
-    else if(strCurrent == "WildcardUnix") {
-	reStyle->setToolTip("This is similar to Wildcard but with the behavior of a Unix shell. The wildcard characters can be escaped with the character \"\\\".");
-    }
-    else if(strCurrent == "FixedString") {
-	reStyle->setToolTip("The pattern is a fixed string. This is equivalent to using the RegExp pattern on a string in which all metacharacters are escaped using escape().");
-    }
-    else if(strCurrent == "W3CXmlSchema11") {
-	reStyle->setToolTip("The pattern is a regular expression as defined by the W3C XML Schema 1.1 specification.");
-    }
 }
