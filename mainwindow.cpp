@@ -86,13 +86,12 @@ void MainWindow::updateResult()
     {
         QRegularExpressionMatch m = mIter.next();
 
+        QTextLayout::FormatRange format;
+        format.start = m.capturedStart();
+        format.length = m.capturedLength();
+        format.format = f;
 
-        QTextLayout::FormatRange fr_tracker;
-        fr_tracker.start = m.capturedStart();
-        fr_tracker.length = m.capturedLength();
-        fr_tracker.format = f;
-
-        formats.append(fr_tracker);
+        formats.append(format);
     }
 
     setLineEditTextFormat(mInputEdit, formats);
