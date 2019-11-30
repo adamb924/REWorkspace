@@ -21,7 +21,6 @@ private slots:
 
 private:
     QLineEdit *string, *re;
-    QTextEdit *result;
     QListWidget *list;
 };
 

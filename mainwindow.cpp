@@ -3,6 +3,31 @@
 #include <QtGui>
 #include <QtWidgets>
 
+/// https://stackoverflow.com/a/14424003/1447002
+static void setLineEditTextFormat(QLineEdit* lineEdit, const QList<QTextLayout::FormatRange>& formats)
+{
+    if(!lineEdit)
+        return;
+
+    QList<QInputMethodEvent::Attribute> attributes;
+    foreach(const QTextLayout::FormatRange& fr, formats)
+    {
+        QInputMethodEvent::AttributeType type = QInputMethodEvent::TextFormat;
+        int start = fr.start - lineEdit->cursorPosition();
+        int length = fr.length;
+        QVariant value = fr.format;
+        attributes.append(QInputMethodEvent::Attribute(type, start, length, value));
+    }
+    QInputMethodEvent event(QString(), attributes);
+    QCoreApplication::sendEvent(lineEdit, &event);
+}
+
+static void clearLineEditTextFormat(QLineEdit* lineEdit)
+{
+    setLineEditTextFormat(lineEdit, QList<QTextLayout::FormatRange>());
+}
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -12,14 +37,12 @@ MainWindow::MainWindow(QWidget *parent)
 //    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
     string = new QLineEdit;
     re = new QLineEdit;
-    result = new QTextEdit;
     list = new QListWidget;
 
     QFont f = string->font();
     f.setPointSize(20);
     string->setFont(f);
     re->setFont(f);
-    result->setFont(f);
     list->setFont(f);
 
     QHBoxLayout *reLayout = new QHBoxLayout;
@@ -35,8 +58,6 @@ MainWindow::MainWindow(QWidget *parent)
     reLayout->addWidget(escapeButton,0);
 
     layout->addLayout(reLayout);
-    layout->addWidget(new QLabel(tr("Result")));
-    layout->addWidget(result);
     layout->addWidget(new QLabel(tr("Matches")));
     layout->addWidget(list);
 
@@ -62,13 +83,27 @@ void MainWindow::updateResult()
     QRegularExpression expression( re->text() );
 
     QRegularExpressionMatch match = expression.match(input);
+    QRegularExpressionMatchIterator mIter = expression.globalMatch(input);
 
-    int from = match.capturedStart();
-    int len = match.capturedLength();
+    QTextCharFormat f;
+    f.setForeground(QBrush(Qt::red));
 
-    if(from != -1)
-	output.replace( from , len , "<font color=\"red\">"+input.mid(from,len)+"</font>");
-    result->setHtml(output);
+    /// https://stackoverflow.com/a/14424003/1447002
+    QList<QTextLayout::FormatRange> formats;
+    while( mIter.hasNext() )
+    {
+        QRegularExpressionMatch m = mIter.next();
+
+
+        QTextLayout::FormatRange fr_tracker;
+        fr_tracker.start = m.capturedStart();
+        fr_tracker.length = m.capturedLength();
+        fr_tracker.format = f;
+
+        formats.append(fr_tracker);
+    }
+
+    setLineEditTextFormat(string, formats);
 
     QStringList captures = match.capturedTexts();
     captures.removeAt(0);
@@ -78,12 +113,10 @@ void MainWindow::updateResult()
     if(!expression.isValid())
     {
 	list->setEnabled(false);
-	result->setEnabled(false);
     }
     else
     {
 	list->setEnabled(true);
-	result->setEnabled(true);
     }
 
     this->setWindowTitle(tr("Regular Expression Workspace"));
