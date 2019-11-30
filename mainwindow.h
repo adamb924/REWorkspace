@@ -20,8 +20,8 @@ private slots:
     void escapeString();
 
 private:
-    QLineEdit *string, *re;
-    QListWidget *list;
+    QLineEdit *mInputEdit, *mRegularExpressionEdit;
+    QListWidget *mCaptureList;
 };
 
 #endif // MAINWINDOW_H

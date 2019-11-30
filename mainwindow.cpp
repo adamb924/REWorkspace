@@ -35,22 +35,22 @@ MainWindow::MainWindow(QWidget *parent)
 
 //    string = new QLineEdit("\\uni0644.medi.preAlef");
 //    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
-    string = new QLineEdit;
-    re = new QLineEdit;
-    list = new QListWidget;
+    mInputEdit = new QLineEdit;
+    mRegularExpressionEdit = new QLineEdit;
+    mCaptureList = new QListWidget;
 
-    QFont f = string->font();
+    QFont f = mInputEdit->font();
     f.setPointSize(20);
-    string->setFont(f);
-    re->setFont(f);
-    list->setFont(f);
+    mInputEdit->setFont(f);
+    mRegularExpressionEdit->setFont(f);
+    mCaptureList->setFont(f);
 
     QHBoxLayout *reLayout = new QHBoxLayout;
 
     layout->addWidget(new QLabel(tr("Input")));
-    layout->addWidget(string);
+    layout->addWidget(mInputEdit);
     layout->addWidget(new QLabel(tr("Regular Expression")));
-    reLayout->addWidget(re,100);
+    reLayout->addWidget(mRegularExpressionEdit,100);
 
     QPushButton *escapeButton = new QPushButton("\\");
     escapeButton->setToolTip(tr("Get this expression as an escaped, C-style string"));
@@ -59,10 +59,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     layout->addLayout(reLayout);
     layout->addWidget(new QLabel(tr("Matches")));
-    layout->addWidget(list);
+    layout->addWidget(mCaptureList);
 
-    connect(string,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
-    connect(re,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
+    connect(mInputEdit,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
+    connect(mRegularExpressionEdit,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
 
     QWidget *cw = new QWidget;
     cw->setLayout(layout);
@@ -78,9 +78,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateResult()
 {
-    QString input = string->text();
+    QString input = mInputEdit->text();
     QString output = input;
-    QRegularExpression expression( re->text() );
+    QRegularExpression expression( mRegularExpressionEdit->text() );
 
     QRegularExpressionMatch match = expression.match(input);
     QRegularExpressionMatchIterator mIter = expression.globalMatch(input);
@@ -103,20 +103,20 @@ void MainWindow::updateResult()
         formats.append(fr_tracker);
     }
 
-    setLineEditTextFormat(string, formats);
+    setLineEditTextFormat(mInputEdit, formats);
 
     QStringList captures = match.capturedTexts();
     captures.removeAt(0);
-    list->clear();
-    list->addItems(captures);
+    mCaptureList->clear();
+    mCaptureList->addItems(captures);
 
     if(!expression.isValid())
     {
-	list->setEnabled(false);
+    mCaptureList->setEnabled(false);
     }
     else
     {
-	list->setEnabled(true);
+    mCaptureList->setEnabled(true);
     }
 
     this->setWindowTitle(tr("Regular Expression Workspace"));
@@ -124,6 +124,6 @@ void MainWindow::updateResult()
 
 void MainWindow::escapeString()
 {
-    QString escaped = re->text().replace("\\","\\\\");
+    QString escaped = mRegularExpressionEdit->text().replace("\\","\\\\");
     QInputDialog::getText( this, this->windowTitle(), tr("The C-escaped regular expression:"), QLineEdit::Normal, escaped );
 }
