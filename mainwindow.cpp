@@ -22,12 +22,6 @@ static void setLineEditTextFormat(QLineEdit* lineEdit, const QList<QTextLayout::
     QCoreApplication::sendEvent(lineEdit, &event);
 }
 
-static void clearLineEditTextFormat(QLineEdit* lineEdit)
-{
-    setLineEditTextFormat(lineEdit, QList<QTextLayout::FormatRange>());
-}
-
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
