@@ -105,10 +105,12 @@ void MainWindow::updateResult()
     if(!expression.isValid())
     {
         mCaptureList->setEnabled(false);
+        mRegularExpressionEdit->setStyleSheet("QLineEdit { border: 1px solid red; }");
     }
     else
     {
         mCaptureList->setEnabled(true);
+        mRegularExpressionEdit->setStyleSheet("");
     }
 
     this->setWindowTitle(tr("Regular Expression Workspace"));
