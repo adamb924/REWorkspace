@@ -33,8 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     QVBoxLayout *layout = new QVBoxLayout;
 
-//    string = new QLineEdit("\\uni0644.medi.preAlef");
-//    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
     mInputEdit = new QLineEdit;
     mRegularExpressionEdit = new QLineEdit;
     mCaptureList = new QListWidget;
