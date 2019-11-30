@@ -104,11 +104,11 @@ void MainWindow::updateResult()
 
     if(!expression.isValid())
     {
-    mCaptureList->setEnabled(false);
+        mCaptureList->setEnabled(false);
     }
     else
     {
-    mCaptureList->setEnabled(true);
+        mCaptureList->setEnabled(true);
     }
 
     this->setWindowTitle(tr("Regular Expression Workspace"));
