@@ -74,6 +74,18 @@ void MainWindow::updateResult()
     QString output = input;
     QRegularExpression expression( mRegularExpressionEdit->text() );
 
+    if(!expression.isValid())
+    {
+        mCaptureList->setEnabled(false);
+        mRegularExpressionEdit->setStyleSheet("QLineEdit { border: 1px solid red; }");
+        return;
+    }
+    else
+    {
+        mCaptureList->setEnabled(true);
+        mRegularExpressionEdit->setStyleSheet("");
+    }
+
     QRegularExpressionMatch match = expression.match(input);
     QRegularExpressionMatchIterator mIter = expression.globalMatch(input);
 
@@ -100,17 +112,6 @@ void MainWindow::updateResult()
     captures.removeAt(0);
     mCaptureList->clear();
     mCaptureList->addItems(captures);
-
-    if(!expression.isValid())
-    {
-        mCaptureList->setEnabled(false);
-        mRegularExpressionEdit->setStyleSheet("QLineEdit { border: 1px solid red; }");
-    }
-    else
-    {
-        mCaptureList->setEnabled(true);
-        mRegularExpressionEdit->setStyleSheet("");
-    }
 
     this->setWindowTitle(tr("Regular Expression Workspace"));
 }
