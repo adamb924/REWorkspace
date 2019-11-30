@@ -25,6 +25,8 @@ static void setLineEditTextFormat(QLineEdit* lineEdit, const QList<QTextLayout::
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    setWindowTitle(tr("Regular Expression Workspace"));
+
     QVBoxLayout *layout = new QVBoxLayout;
 
     mInputEdit = new QLineEdit;
@@ -112,8 +114,6 @@ void MainWindow::updateResult()
     captures.removeAt(0);
     mCaptureList->clear();
     mCaptureList->addItems(captures);
-
-    this->setWindowTitle(tr("Regular Expression Workspace"));
 }
 
 void MainWindow::escapeString()
