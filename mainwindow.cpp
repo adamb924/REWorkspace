@@ -75,6 +75,7 @@ void MainWindow::updateResult()
     QString input = mInputEdit->text();
     QString output = input;
     QRegularExpression expression( mRegularExpressionEdit->text() );
+    expression.setPatternOptions(QRegularExpression::UseUnicodePropertiesOption);
 
     if(!expression.isValid())
     {
