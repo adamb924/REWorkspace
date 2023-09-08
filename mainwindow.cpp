@@ -3,44 +3,48 @@
 #include <QtGui>
 #include <QtWidgets>
 
+/// https://stackoverflow.com/a/14424003/1447002
+static void setLineEditTextFormat(QLineEdit* lineEdit, const QList<QTextLayout::FormatRange>& formats)
+{
+    if(!lineEdit)
+        return;
+
+    QList<QInputMethodEvent::Attribute> attributes;
+    foreach(const QTextLayout::FormatRange& fr, formats)
+    {
+        QInputMethodEvent::AttributeType type = QInputMethodEvent::TextFormat;
+        int start = fr.start - lineEdit->cursorPosition();
+        int length = fr.length;
+        QVariant value = fr.format;
+        attributes.append(QInputMethodEvent::Attribute(type, start, length, value));
+    }
+    QInputMethodEvent event(QString(), attributes);
+    QCoreApplication::sendEvent(lineEdit, &event);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    setWindowTitle(tr("Regular Expression Workspace"));
+
     QVBoxLayout *layout = new QVBoxLayout;
 
-//    string = new QLineEdit("\\uni0644.medi.preAlef");
-//    re = new QLineEdit("\\\\uni([abcdefABCDEF1234567890]{4})(?:\\.(init|fina|medi))*(?:\\.([^\\.]*))?");
-    string = new QLineEdit;
-    re = new QLineEdit;
-    result = new QTextEdit;
-    list = new QListWidget;
+    mInputEdit = new QLineEdit;
+    mRegularExpressionEdit = new QLineEdit;
+    mCaptureList = new QListWidget;
 
-    QFont f = string->font();
+    QFont f = mInputEdit->font();
     f.setPointSize(20);
-    string->setFont(f);
-    re->setFont(f);
-    result->setFont(f);
-    list->setFont(f);
+    mInputEdit->setFont(f);
+    mRegularExpressionEdit->setFont(f);
+    mCaptureList->setFont(f);
 
     QHBoxLayout *reLayout = new QHBoxLayout;
 
     layout->addWidget(new QLabel(tr("Input")));
-    layout->addWidget(string);
+    layout->addWidget(mInputEdit);
     layout->addWidget(new QLabel(tr("Regular Expression")));
-    reLayout->addWidget(re,100);
-
-    reStyle = new QComboBox;
-    reStyle ->setToolTip(tr("The regular expression syntax to use"));
-    reStyle->addItem("RegExp");
-    reStyle->addItem("RegExp2");
-    reStyle->addItem("Wildcard");
-    reStyle->addItem("Wildcard");
-    reStyle->addItem("WildcardUnix");
-    reStyle->addItem("FixedString");
-    reStyle->addItem("W3CXmlSchema11");
-    connect(reStyle,SIGNAL(currentIndexChanged(QString)),this,SLOT(setRETypeToolTip()));
-    connect(reStyle,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateResult()));
-    reLayout->addWidget(reStyle);
+    reLayout->addWidget(mRegularExpressionEdit,100);
 
     QPushButton *escapeButton = new QPushButton("\\");
     escapeButton->setToolTip(tr("Get this expression as an escaped, C-style string"));
@@ -48,20 +52,17 @@ MainWindow::MainWindow(QWidget *parent)
     reLayout->addWidget(escapeButton,0);
 
     layout->addLayout(reLayout);
-    layout->addWidget(new QLabel(tr("Result")));
-    layout->addWidget(result);
     layout->addWidget(new QLabel(tr("Matches")));
-    layout->addWidget(list);
+    layout->addWidget(mCaptureList);
 
-    connect(string,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
-    connect(re,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
+    connect(mInputEdit,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
+    connect(mRegularExpressionEdit,SIGNAL(textChanged(QString)),this,SLOT(updateResult()));
 
     QWidget *cw = new QWidget;
     cw->setLayout(layout);
     this->setCentralWidget(cw);
 
     updateResult();
-    setRETypeToolTip();
 }
 
 MainWindow::~MainWindow()
@@ -71,82 +72,53 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateResult()
 {
-    QString input = string->text();
+    QString input = mInputEdit->text();
     QString output = input;
-    QRegExp expression( re->text() );
-
-    QString strCurrent = reStyle->currentText();
-    if(strCurrent == "RegExp") {
-	expression.setPatternSyntax(QRegExp::RegExp);
-    }
-    else if(strCurrent == "RegExp2") {
-	expression.setPatternSyntax(QRegExp::RegExp2);
-    }
-    else if(strCurrent == "Wildcard") {
-	expression.setPatternSyntax(QRegExp::Wildcard);
-    }
-    else if(strCurrent == "WildcardUnix") {
-	expression.setPatternSyntax(QRegExp::WildcardUnix);
-    }
-    else if(strCurrent == "FixedString") {
-	expression.setPatternSyntax(QRegExp::FixedString);
-    }
-    else if(strCurrent == "W3CXmlSchema11") {
-	expression.setPatternSyntax(QRegExp::W3CXmlSchema11);
-    }
-
-
-    int from = expression.indexIn(input);
-    int len = expression.matchedLength();
-
-    if(from != -1)
-	output.replace( from , len , "<font color=\"red\">"+input.mid(from,len)+"</font>");
-    result->setHtml(output);
-
-    QStringList captures = expression.capturedTexts();
-    captures.removeAt(0);
-    list->clear();
-    list->addItems(captures);
+    QRegularExpression expression( mRegularExpressionEdit->text() );
+    expression.setPatternOptions(QRegularExpression::UseUnicodePropertiesOption);
 
     if(!expression.isValid())
     {
-	list->setEnabled(false);
-	result->setEnabled(false);
+        mCaptureList->setEnabled(false);
+        mRegularExpressionEdit->setStyleSheet("QLineEdit { border: 1px solid red; }");
+        return;
     }
     else
     {
-	list->setEnabled(true);
-	result->setEnabled(true);
+        mCaptureList->setEnabled(true);
+        mRegularExpressionEdit->setStyleSheet("");
     }
 
-    this->setWindowTitle(tr("Regular Expression Workspace"));
+    QRegularExpressionMatch match = expression.match(input);
+    QRegularExpressionMatchIterator mIter = expression.globalMatch(input);
+
+    QTextCharFormat f;
+    f.setForeground(QBrush(Qt::red));
+
+    /// https://stackoverflow.com/a/14424003/1447002
+    QList<QTextLayout::FormatRange> formats;
+    while( mIter.hasNext() )
+    {
+        QRegularExpressionMatch m = mIter.next();
+
+        QTextLayout::FormatRange format;
+        format.start = m.capturedStart();
+        format.length = m.capturedLength();
+        format.format = f;
+
+        formats.append(format);
+    }
+
+    setLineEditTextFormat(mInputEdit, formats);
+
+    QStringList captures = match.capturedTexts();
+    captures.removeAt(0);
+    mCaptureList->clear();
+    mCaptureList->addItems(captures);
 }
 
 void MainWindow::escapeString()
 {
-    QString escaped = re->text().replace("\\","\\\\");
+    QString escaped = mRegularExpressionEdit->text().replace("\\","\\\\");
     QInputDialog::getText( this, this->windowTitle(), tr("The C-escaped regular expression:"), QLineEdit::Normal, escaped );
-}
-
-void MainWindow::setRETypeToolTip()
-{
-    QString strCurrent = reStyle->currentText();
-    if(strCurrent == "RegExp") {
-	reStyle->setToolTip("A rich Perl-like pattern matching syntax. This is the default.");
-    }
-    else if(strCurrent == "RegExp2") {
-	reStyle->setToolTip("Like RegExp, but with greedy quantifiers. This will be the default in Qt 5. (Introduced in Qt 4.2.)");
-    }
-    else if(strCurrent == "Wildcard") {
-	reStyle->setToolTip("This provides a simple pattern matching syntax similar to that used by shells (command interpreters) for \"file globbing\". See Wildcard Matching.");
-    }
-    else if(strCurrent == "WildcardUnix") {
-	reStyle->setToolTip("This is similar to Wildcard but with the behavior of a Unix shell. The wildcard characters can be escaped with the character \"\\\".");
-    }
-    else if(strCurrent == "FixedString") {
-	reStyle->setToolTip("The pattern is a fixed string. This is equivalent to using the RegExp pattern on a string in which all metacharacters are escaped using escape().");
-    }
-    else if(strCurrent == "W3CXmlSchema11") {
-	reStyle->setToolTip("The pattern is a regular expression as defined by the W3C XML Schema 1.1 specification.");
-    }
 }

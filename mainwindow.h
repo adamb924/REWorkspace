@@ -12,19 +12,16 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
     void updateResult();
     void escapeString();
-    void setRETypeToolTip();
 
 private:
-    QLineEdit *string, *re;
-    QTextEdit *result;
-    QListWidget *list;
-    QComboBox *reStyle;
+    QLineEdit *mInputEdit, *mRegularExpressionEdit;
+    QListWidget *mCaptureList;
 };
 
 #endif // MAINWINDOW_H
